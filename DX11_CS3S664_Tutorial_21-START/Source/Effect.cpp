@@ -90,7 +90,8 @@ void Effect::initDefaultStates(ID3D11Device *device ){
 	// Setup default blend state descriptor 
 	blendDesc.AlphaToCoverageEnable = FALSE; // Use pixel coverage info from rasteriser (default FALSE)
 	blendDesc.IndependentBlendEnable = FALSE; // The following array of render target blend properties uses the blend properties from RenderTarget[0] for ALL render targets
-	blendDesc.RenderTarget[0].BlendEnable = FALSE;
+	// Add Code Here (Set Alpha Blending On)
+	blendDesc.RenderTarget[0].BlendEnable = TRUE;
 	blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
 	blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_ZERO;
 	blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;

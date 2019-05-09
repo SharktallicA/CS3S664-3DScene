@@ -112,6 +112,9 @@
     <ClInclude Include="Source\ToneMapUtility.h">
       <Filter>App Models</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Terrain.h">
+      <Filter>App Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\GUMemory.cpp">
@@ -186,6 +189,9 @@
     <ClCompile Include="Source\ToneMapUtility.cpp">
       <Filter>App Models</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Terrain.cpp">
+      <Filter>App Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\hlsl\basic_colour_ps.hlsl">
@@ -246,6 +252,12 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\hlsl\tone_map_ps.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\hlsl\tree_ps.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\hlsl\tree_vs.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

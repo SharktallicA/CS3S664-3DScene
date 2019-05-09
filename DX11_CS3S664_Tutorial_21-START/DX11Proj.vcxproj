@@ -110,6 +110,7 @@
     <ClInclude Include="Source\Mesh.h" />
     <ClInclude Include="Source\stdafx.h" />
     <ClInclude Include="Source\targetver.h" />
+    <ClInclude Include="Source\Terrain.h" />
     <ClInclude Include="Source\Texture.h" />
     <ClInclude Include="Source\ToneMapUtility.h" />
     <ClInclude Include="Source\Triangle.h" />
@@ -139,6 +140,7 @@
     <ClCompile Include="Source\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Source\Terrain.cpp" />
     <ClCompile Include="Source\Texture.cpp" />
     <ClCompile Include="Source\ToneMapUtility.cpp" />
     <ClCompile Include="Source\Triangle.cpp" />
@@ -204,6 +206,12 @@
     </FxCompile>
     <FxCompile Include="Shaders\hlsl\tone_map_ps.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Shaders\hlsl\tree_ps.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Shaders\hlsl\tree_vs.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
     </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
