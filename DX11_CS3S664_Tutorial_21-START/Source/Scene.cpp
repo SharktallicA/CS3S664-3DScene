@@ -17,6 +17,7 @@
 #include <Effect.h>
 #include <VertexStructures.h>
 #include <Texture.h>
+#include <Terrain.h>
 
 using namespace std;
 using namespace DirectX;

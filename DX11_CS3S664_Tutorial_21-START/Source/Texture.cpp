@@ -37,3 +37,8 @@ Texture::Texture(ID3D11Device *device, const std::wstring& filename)
 Texture::~Texture()
 {
 }
+
+ID3D11Texture2D* Texture::getTexture()
+{
+	return texture;
+}
