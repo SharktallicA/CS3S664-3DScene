@@ -61,10 +61,11 @@ HRESULT Scene::initialiseSceneResources() {
 
 	// The Effect class is similar to the depricated DX9 Effect. It stores pipeline shaders, pipeline states  etc and binds them to setup the pipeline to render with a particular Effect. The constructor requires that at least shaders are provided along a description of the vertex structure.
 	Effect *basicColourEffect = new Effect(device, "Shaders\\cso\\basic_colour_vs.cso", "Shaders\\cso\\basic_colour_ps.cso", basicVertexDesc, ARRAYSIZE(basicVertexDesc));
-	Effect *basicLightingEffect = new Effect(device, "Shaders\\cso\\basic_lighting_vs.cso", "Shaders\\cso\\basic_colour_ps.cso", extVertexDesc, ARRAYSIZE(extVertexDesc));
+	Effect* basicLightingEffect = new Effect(device, "Shaders\\cso\\basic_lighting_vs.cso", "Shaders\\cso\\basic_colour_ps.cso", extVertexDesc, ARRAYSIZE(extVertexDesc));
+	Effect* perPixelLightingEffect = new Effect(device, "Shaders\\cso\\per_pixel_lighting_vs.cso", "Shaders\\cso\\per_pixel_lighting_ps.cso", extVertexDesc, ARRAYSIZE(extVertexDesc));
 
 	triangle = new Triangle(device, basicColourEffect, NULL);
-	box = new Box(device, basicLightingEffect, NULL);
+	box = new Box(device, perPixelLightingEffect, NULL);
 
 	// Allocate 16 byte aligned block of memory for "main memory" copy of cBufferBasic
 	cBufferBasicCPU = (CBufferBasic*)_aligned_malloc(sizeof(CBufferBasic), 16);
@@ -79,7 +80,7 @@ HRESULT Scene::initialiseSceneResources() {
 	cBufferBasicCPU->WVPMatrix = worldMatrix*viewMatrix*projMatrix;
 	XMVECTOR det=XMMatrixDeterminant(worldMatrix);
 	cBufferBasicCPU->worldITMatrix = XMMatrixInverse(&det, XMMatrixTranspose(worldMatrix));
-	cBufferBasicCPU->lightDir = XMFLOAT3(0.5, -0.5, 1.0);
+	cBufferBasicCPU->lightDir = XMFLOAT3(0.5, -0.5, 5.0);
 
 	// Create GPU resource memory copy of cBufferBasic
 	// fill out description (Note if we want to update the CBuffer we need  D3D11_CPU_ACCESS_WRITE)

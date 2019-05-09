@@ -16,8 +16,8 @@ struct vertexInputPacket {
 
 struct vertexOutputPacket {
 
-	float4				colour		: COLOR;
-	float4				posH			: SV_POSITION;
+	float4			colour	: COLOR;
+	float4			posH	: SV_POSITION;
 };
 
 cbuffer basicCBuffer : register(b0) {
@@ -41,9 +41,9 @@ vertexOutputPacket main(vertexInputPacket inputVertex) {
 	// Transform normals to world space with worldITMatrix.
 	float3 norm = normalize(mul(float4(inputVertex.normal, 1.0f), worldITMatrix).xyz);
 
-		// For a basic diffuse light
-		outputVertex.colour = inputVertex.matDiffuse;// *saturate(dot(norm, normalize(-lightDir)));
-	
+	// For a bsic diffuse light
+	outputVertex.colour = inputVertex.matDiffuse * saturate(dot(norm, normalize(-lightDir)));
+
 	// transformation of vertex position from "3d model space" into 2d "screen space"
 	outputVertex.posH = mul(float4(inputVertex.pos, 1.0), worldViewProjMatrix);
 
