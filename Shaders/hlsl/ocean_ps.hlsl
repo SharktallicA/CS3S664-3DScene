@@ -88,18 +88,27 @@ FragmentOutputPacket main(FragmentInputPacket IN) {
 	///////// TWEAKABLE PARAMETERS //////////////////
 	float FresnelBias =		0.3;
 	float FresnelExp =		4.0;
-	float3 DeepColor =		 { 0.0f, 0.0f, 0.1f };
+	float3 DeepColor =		{ 0.0f, 0.0f, 0.1f };
 	float3 ShallowColor =	{ 0.0f, 0.2f, 0.2f };
 	float3 ReflTint =		{ 1.0f, 1.0f, 1.0f };
 	float Kr =				1.0f;
 	float KWater =			1.0f;
 	float HDRMultiplier =	0;
 
-	// Sum normal maps
-	float4 t0 = gNormMap.Sample(gNormalLinearSam, IN.bumpUV0)*2.0 - 1.0;
-	float4 t1 = gNormMap.Sample(gNormalLinearSam, IN.bumpUV1)*2.0 - 1.0;
-	float4 t2 = gNormMap.Sample(gNormalLinearSam, IN.bumpUV2)*2.0 - 1.0;
-	float3 Nt = t0.xyz + t1.xyz + t2.xyz;
+	// For no normal mapping
+	float3 Nt = float3(0, 0, 1);
+
+	// For coarse normal mapping
+	//float4 t0 = gNormMap.Sample(gNormalLinearSam, IN.bumpUV0) * 2.0 - 1.0;
+	//float3 Nt = t0.xyz;
+
+	// For coarse + medium normal mapping
+	//float4 t1 = gNormMap.Sample(gNormalLinearSam, IN.bumpUV1) * 2.0 - 1.0;
+	//float3 Nt = t0.xyz + t1.xyz;
+
+	// For coarse + medium + fine normal mapping
+	//float4 t2 = gNormMap.Sample(gNormalLinearSam, IN.bumpUV2) * 2.0 - 1.0;
+	//float3 Nt = t0.xyz + t1.xyz + t2.xyz;
 
 	// Transform normals from texture space to world coordinates
 	// Add Code Here (Reconstruct float3X3 tangent to world matrix)

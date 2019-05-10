@@ -361,9 +361,9 @@ HRESULT Scene::renderScene()
 
 	// Render Scene objects
 	renderSkybox(context);
-	renderFlares(context);
+	//renderFlares(context);
 	renderTerrain(context);
-	renderStructures(context);
+	//renderStructures(context);
 	//renderParticleSystems(context);
 
 	// Present current frame to the screen
