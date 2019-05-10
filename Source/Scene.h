@@ -20,8 +20,8 @@
 #include <CBufferStructures.h>
 
 
-class Scene{
-
+class Scene
+{
 	HINSTANCE								hInst = NULL;
 	HWND									wndHandle = NULL;
 
@@ -93,9 +93,7 @@ public:
 	HRESULT initialiseSceneResources();
 	HRESULT updateScene(ID3D11DeviceContext *context, Camera *camera);
 	HRESULT renderScene();
-	void DrawGrass(ID3D11DeviceContext* context);
-	void DrawGround(ID3D11DeviceContext* context);
-	void DrawFlare(ID3D11DeviceContext *context);
+
 	// Clock handling methods
 	void startClock();
 	void stopClock();

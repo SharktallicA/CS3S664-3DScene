@@ -23,6 +23,8 @@ using namespace DirectX;
 using namespace DirectX::PackedVector;
 
 #pragma region Khalid Ali (15005070) scene
+// Constructs scene skybox.
+// Constructed with Box object, and sky_box shader.
 void Scene::constructSkybox(ID3D11Device* device, ID3D11DeviceContext* context)
 {
 	Effect* skyboxEffect = new Effect(device, "Shaders\\cso\\sky_box_vs.cso", "Shaders\\cso\\sky_box_ps.cso", extVertexDesc, ARRAYSIZE(extVertexDesc));
@@ -41,6 +43,8 @@ void Scene::constructSkybox(ID3D11Device* device, ID3D11DeviceContext* context)
 	box->update(context);
 }
 
+// Constructs scene sun lens flare.
+// Constructed with array of Flare objects, and flare shader. Uses blending.
 void Scene::constructFlares(ID3D11Device* device, ID3D11DeviceContext* context)
 {
 	Effect* flareEffect = new Effect(device, "Shaders\\cso\\flare_vs.cso", "Shaders\\cso\\flare_ps.cso", flareVertexDesc, ARRAYSIZE(flareVertexDesc));
@@ -69,6 +73,8 @@ void Scene::constructFlares(ID3D11Device* device, ID3D11DeviceContext* context)
 	}
 }
 
+// Constructs scene terrain features and foliage.
+// Constructed with Terrain, tree and Grid objects, and grass, tree, and ocean shaders. Uses blending.
 void Scene::constructTerrain(ID3D11Device* device, ID3D11DeviceContext* context)
 {
 	Effect* grassEffect = new Effect(device, "Shaders\\cso\\grass_vs.cso", "Shaders\\cso\\grass_ps.cso", extVertexDesc, ARRAYSIZE(extVertexDesc));
@@ -114,6 +120,8 @@ void Scene::constructTerrain(ID3D11Device* device, ID3D11DeviceContext* context)
 	water->update(context);
 }
 
+// Constructs scene 'man-made' objects.
+// Constructed with Model objects, and per-pixel lighting and emissive shaders. Uses blending.
 void Scene::constructStructures(ID3D11Device* device, ID3D11DeviceContext* context)
 {
 	Effect* perPixelLightingEffect = new Effect(device, "Shaders\\cso\\per_pixel_lighting_vs.cso", "Shaders\\cso\\per_pixel_lighting_ps.cso", extVertexDesc, ARRAYSIZE(extVertexDesc));
@@ -149,6 +157,8 @@ void Scene::constructStructures(ID3D11Device* device, ID3D11DeviceContext* conte
 	sword->update(context);
 }
 
+// Constructs scene particle scenes.
+// Constructed with ParticleSystem object, and fire shaders. Uses blending.
 void Scene::constructParticleSystems(ID3D11Device* device, ID3D11DeviceContext* context)
 {
 	Effect* fireEffect = new Effect(device, "Shaders\\cso\\fire_vs.cso", "Shaders\\cso\\fire_ps.cso", particleVertexDesc, ARRAYSIZE(particleVertexDesc));
