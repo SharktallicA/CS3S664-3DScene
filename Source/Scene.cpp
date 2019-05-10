@@ -120,13 +120,20 @@ void Scene::constructStructures(ID3D11Device* device, ID3D11DeviceContext* conte
 	Texture* castleTexture = new Texture(device, L"Resources\\Textures\\castle.jpg");
 	ID3D11ShaderResourceView* castleTextureArray[] = { castleTexture->getShaderResourceView() };
 	castle = new Model(device, wstring(L"Resources\\Models\\castle.3DS"), perPixelLightingEffect, NULL, 0, castleTextureArray, 1);
-	castle->setWorldMatrix(castle->getWorldMatrix() * XMMatrixTranslation(0, 0.4, 0) * XMMatrixScaling(2.5, 2.5, 2.5));
+	castle->setWorldMatrix(castle->getWorldMatrix() * XMMatrixTranslation(0, 0.5, 0) * XMMatrixScaling(2.5, 2.5, 2.5));
 	castle->update(context);
+
+	Texture* rocksDiffuseTexture = new Texture(device, L"Resources\\Textures\\Rock_6_d.png");
+	Texture* rocksNormalTexture = new Texture(device, L"Resources\\Textures\\Rock_6_n.png");
+	ID3D11ShaderResourceView* rocksTextureArray[] = { rocksDiffuseTexture->getShaderResourceView(), rocksNormalTexture->getShaderResourceView() };
+	rocks = new Model(device, wstring(L"Resources\\Models\\Rock_6.OBJ"), perPixelLightingEffect, NULL, 0, rocksTextureArray, 2);
+	rocks->setWorldMatrix(rocks->getWorldMatrix() * XMMatrixScaling(0.25, 0.25, 0.25) * XMMatrixTranslation(0, 1.4, 5.9));
+	rocks->update(context);
 
 	Texture* swordTexture = new Texture(device, L"Resources\\Textures\\Aluminum.jpg");
 	ID3D11ShaderResourceView* swordTextureArray[] = { swordTexture->getShaderResourceView() };
 	sword = new Model(device, wstring(L"Resources\\Models\\sword.3ds"), perPixelLightingEffect, NULL, 0, swordTextureArray, 1);
-	sword->setWorldMatrix(sword->getWorldMatrix() * XMMatrixScaling(0.00025, 0.00025, 0.00025) * XMMatrixRotationX(XMConvertToRadians(90)) * XMMatrixRotationY(XMConvertToRadians(180)) * XMMatrixRotationZ(XMConvertToRadians(90)) * XMMatrixTranslation(0, 2, 6));
+	sword->setWorldMatrix(sword->getWorldMatrix() * XMMatrixScaling(0.0002, 0.0002, 0.0002) * XMMatrixRotationX(XMConvertToRadians(90)) * XMMatrixRotationY(XMConvertToRadians(180)) * XMMatrixRotationZ(XMConvertToRadians(90)) * XMMatrixTranslation(0, 1.6, 6));
 	sword->update(context);
 }
 
@@ -215,6 +222,9 @@ void Scene::renderStructures(ID3D11DeviceContext* context)
 {
 	if (castle)
 		castle->render(context);
+
+	if (rocks)
+		rocks->render(context);
 
 	if (sword)
 		sword->render(context);

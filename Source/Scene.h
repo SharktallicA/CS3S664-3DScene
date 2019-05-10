@@ -56,6 +56,7 @@ class Scene{
 
 	// Structures variables
 	Model* castle = nullptr;
+	Model* rocks = nullptr;
 	Model* sword = nullptr;
 
 	// Particle systme variables
