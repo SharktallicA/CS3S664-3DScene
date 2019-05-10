@@ -53,7 +53,8 @@ struct vertexOutputPacket {
 //-----------------------------------------------------------------
 // Vertex Shader
 //-----------------------------------------------------------------
-vertexOutputPacket main(vertexInputPacket vin) {
+vertexOutputPacket main(vertexInputPacket vin)
+{
 	float4x4 VP = mul(viewMatrix, projMatrix);
 
 	float gPartLife = 0.7;//seconds
@@ -67,11 +68,11 @@ vertexOutputPacket main(vertexInputPacket vin) {
 	vertexOutputPacket vout = (vertexOutputPacket)0;
 
 	float age = vin.data.x;
-	float ptime = fmod(Time + (age*gPartLife), gPartLife);
-	float size = ((gPartScale*ptime) + (gPartScale * 2));
+	float ptime = fmod(Time + (age * gPartLife), gPartLife);
+	float size = ((gPartScale * ptime) + (gPartScale * 2));
 	vout.alpha = 1.0 - (ptime / gPartLife);
 
-	float3 pos = vin.pos+ ptime*vin.vel;
+	float3 pos = vin.pos + ptime * vin.vel;
 	pos = mul(float4(pos, 1.0), worldMatrix).xyz;
 
 	// Compute camera ortho normal basis to direct billboard faces towards the camera.
@@ -80,16 +81,15 @@ vertexOutputPacket main(vertexInputPacket vin) {
 	float3 right = normalize(cross(float3(0, 1, 0), look));
 	float3 up = cross(look, right);
 
-	
+
 	// Transform to world space.
 	// Add Code Here (Transform particle verticies to face the camera)
-	pos= pos + (posL.x*right*size) + (posL.y*up*size);
+	pos = pos + (posL.x * right * size) + (posL.y * up * size);
 
 	// Transform to homogeneous clip space.
 	vout.posH = mul(float4(pos, 1.0f), VP);
 
 	//calculate texture coordinates
-	vout.texCoord = float2((vin.posL.x + 1)*0.5, (vin.posL.y + 1)*0.5);
+	vout.texCoord = float2((vin.posL.x + 1) * 0.5, (vin.posL.y + 1) * 0.5);
 	return vout;
-
 }

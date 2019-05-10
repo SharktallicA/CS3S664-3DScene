@@ -19,31 +19,32 @@
 #include <BlurUtility.h>
 #include <CBufferStructures.h>
 
-class Scene
-{
-	HINSTANCE hInst = NULL;
-	HWND wndHandle = NULL;
+
+class Scene{
+
+	HINSTANCE								hInst = NULL;
+	HWND									wndHandle = NULL;
 
 	// Strong reference to associated Direct3D device and rendering context.
-	System* system = nullptr;
+	System									*system = nullptr;
 
-	D3D11_VIEWPORT viewport;
-	CGDClock* mainClock;
-	LookAtCamera* mainCamera;
+	D3D11_VIEWPORT							viewport;
+	CGDClock								*mainClock;
+	LookAtCamera							*mainCamera;
 
 	CBufferScene* cBufferSceneCPU = nullptr;
-	ID3D11Buffer* cBufferSceneGPU = nullptr;
+	ID3D11Buffer *cBufferSceneGPU = nullptr;
 	CBufferLight* cBufferLightCPU = nullptr;
-	ID3D11Buffer* cBufferLightGPU = nullptr;
+	ID3D11Buffer *cBufferLightGPU = nullptr;
 
 
 	// Add objects to the scene
-	Triangle* triangle = nullptr; //pointer to a Triangle the actual triangle is created in initialiseSceneResources
-	Box* box = nullptr; //pointer to a Triangle the actual triangle is created in initialiseSceneResources
-	Model* orb = nullptr;
-	Grid* water = nullptr;
-	BlurUtility* blurUtility = nullptr;
-	static const int numFlares = 6;
+	Triangle								*triangle = nullptr; //pointer to a Triangle the actual triangle is created in initialiseSceneResources
+	Box										*box = nullptr; //pointer to a Triangle the actual triangle is created in initialiseSceneResources
+	Model									*orb = nullptr;
+	Grid									*water = nullptr;
+	BlurUtility								*blurUtility = nullptr;
+	static const int						numFlares = 6;
 	Flare* flares[numFlares];
 	Model* tree = nullptr;
 	Grid* grass = nullptr;
@@ -55,6 +56,22 @@ class Scene
 
 	// Private constructor
 	Scene(const LONG _width, const LONG _height, const wchar_t* wndClassName, const wchar_t* wndTitle, int nCmdShow, HINSTANCE hInstance, WNDPROC WndProc);
+
+	// Methods to construct scene objects' effects, blending descriptions,
+	// and texture
+	void constructSkybox(ID3D11Device*, ID3D11DeviceContext*);
+	void constructFlares(ID3D11Device*, ID3D11DeviceContext*);
+	void constructTerrain(ID3D11Device*, ID3D11DeviceContext*);
+	void constructStructures(ID3D11Device*, ID3D11DeviceContext*);
+	void constructParticleSystems(ID3D11Device*, ID3D11DeviceContext*);
+
+	// Methods to render scene objects every frame
+	void renderSkybox(ID3D11DeviceContext*);
+	void renderFlares(ID3D11DeviceContext*);
+	void renderTerrain(ID3D11DeviceContext*);
+	void renderStructures(ID3D11DeviceContext*);
+	void renderParticleSystems(ID3D11DeviceContext*);
+
 	// Return TRUE if the window is in a minimised state, FALSE otherwise
 	BOOL isMinimised();
 
@@ -62,14 +79,15 @@ public:
 	// Public methods
 	// Method to create the main Scene
 	static Scene* CreateScene(const LONG _width, const LONG _height, const wchar_t* wndClassName, const wchar_t* wndTitle, int nCmdShow, HINSTANCE hInstance, WNDPROC WndProc);
-
+	
 	// Methods to handle initialisation, update and rendering of the scene
 	HRESULT rebuildViewport();
 	HRESULT initialiseSceneResources();
-	HRESULT updateScene(ID3D11DeviceContext* context, Camera* camera);
+	HRESULT updateScene(ID3D11DeviceContext *context, Camera *camera);
 	HRESULT renderScene();
+	void DrawGrass(ID3D11DeviceContext* context);
 	void DrawGround(ID3D11DeviceContext* context);
-	void DrawFlare(ID3D11DeviceContext* context);
+	void DrawFlare(ID3D11DeviceContext *context);
 	// Clock handling methods
 	void startClock();
 	void stopClock();
@@ -77,14 +95,14 @@ public:
 
 	// Event handling methods
 	// Process mouse move with the left button held down
-	void handleMouseLDrag(const POINT& disp);
+	void handleMouseLDrag(const POINT &disp);
 	// Process mouse wheel movement
 	void handleMouseWheel(const short zDelta);
 	// Process key down event.  keyCode indicates the key pressed while extKeyFlags indicates the extended key status at the time of the key down event (see http://msdn.microsoft.com/en-gb/library/windows/desktop/ms646280%28v=vs.85%29.aspx).
 	void handleKeyDown(const WPARAM keyCode, const LPARAM extKeyFlags);
 	// Process key up event.  keyCode indicates the key released while extKeyFlags indicates the extended key status at the time of the key up event (see http://msdn.microsoft.com/en-us/library/windows/desktop/ms646281%28v=vs.85%29.aspx).
 	void handleKeyUp(const WPARAM keyCode, const LPARAM extKeyFlags);
-
+	
 	// Helper function to call updateScene followed by renderScene
 	HRESULT updateAndRenderScene();
 

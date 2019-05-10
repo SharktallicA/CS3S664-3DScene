@@ -21,31 +21,135 @@ using namespace std;
 using namespace DirectX;
 using namespace DirectX::PackedVector;
 
-//
-// Methods to handle initialisation, update and rendering of the scene
-HRESULT Scene::rebuildViewport()
+void Scene::constructSkybox(ID3D11Device* device, ID3D11DeviceContext* context)
 {
-	// Binds the render target view and depth/stencil view to the pipeline.
-	// Sets up viewport for the main window (wndHandle) 
-	// Called at initialisation or in response to window resize
-	ID3D11DeviceContext *context = system->getDeviceContext();
-	if (!context)
-		return E_FAIL;
-	// Bind the render target view and depth/stencil view to the pipeline.
-	ID3D11RenderTargetView* renderTargetView = system->getBackBufferRTV();
-	context->OMSetRenderTargets(1, &renderTargetView, system->getDepthStencil());
-	// Setup viewport for the main window (wndHandle)
-	RECT clientRect;
-	GetClientRect(wndHandle, &clientRect);
-	viewport.TopLeftX = 0;
-	viewport.TopLeftY = 0;
-	viewport.Width = static_cast<FLOAT>(clientRect.right - clientRect.left);
-	viewport.Height = static_cast<FLOAT>(clientRect.bottom - clientRect.top);
-	viewport.MinDepth = 0.0f;
-	viewport.MaxDepth = 1.0f;
-	//Set Viewport
-	context->RSSetViewports(1, &viewport);
-	return S_OK;
+	Effect* skyboxEffect = new Effect(device, "Shaders\\cso\\sky_box_vs.cso", "Shaders\\cso\\sky_box_ps.cso", extVertexDesc, ARRAYSIZE(extVertexDesc));
+
+	ID3D11DepthStencilState* skyboxDSState = skyboxEffect->getDepthStencilState();
+	D3D11_DEPTH_STENCIL_DESC skyboxDSDesc;
+	skyboxDSState->GetDesc(&skyboxDSDesc);
+	skyboxDSDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
+	skyboxDSState->Release(); device->CreateDepthStencilState(&skyboxDSDesc, &skyboxDSState);
+	skyboxEffect->setDepthStencilState(skyboxDSState);
+
+	Texture* cubeDayTexture = new Texture(device, L"Resources\\Textures\\grassenvmap1024.dds");
+	ID3D11ShaderResourceView* skyboxTextureArray[] = { cubeDayTexture->getShaderResourceView() };
+	box = new Box(device, skyboxEffect, NULL, 0, skyboxTextureArray, 1);
+	box->setWorldMatrix(box->getWorldMatrix() * XMMatrixScaling(2000, 2000, 2000));
+	box->update(context);
+}
+
+void Scene::constructFlares(ID3D11Device* device, ID3D11DeviceContext* context)
+{
+	Effect* flareEffect = new Effect(device, "Shaders\\cso\\flare_vs.cso", "Shaders\\cso\\flare_ps.cso", flareVertexDesc, ARRAYSIZE(flareVertexDesc));
+
+	D3D11_BLEND_DESC flareBlendDesc;
+	ID3D11BlendState* flareBlendState = flareEffect->getBlendState();
+	flareBlendState->GetDesc(&flareBlendDesc);
+	flareBlendDesc.AlphaToCoverageEnable = FALSE;
+	flareBlendDesc.RenderTarget[0].BlendEnable = TRUE;
+	flareBlendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
+	flareBlendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
+	flareBlendState->Release(); device->CreateBlendState(&flareBlendDesc, &flareBlendState);
+	flareEffect->setBlendState(flareBlendState);
+
+	Texture* flare1Texture = new Texture(device, L"Resources\\Textures\\flares\\divine.png");
+	Texture* flare2Texture = new Texture(device, L"Resources\\Textures\\flares\\extendring.png");
+	ID3D11ShaderResourceView* flare1TextureArray[] = { flare1Texture->getShaderResourceView() };
+	ID3D11ShaderResourceView* flare2TextureArray[] = { flare2Texture->getShaderResourceView() };
+
+	for (int i = 0; i < numFlares; i++)
+	{
+		if (randM1P1() > 0)
+			flares[i] = new Flare(XMFLOAT3(-125.0, 60.0, 70.0), XMCOLOR(randM1P1() * 0.5 + 0.5, randM1P1() * 0.5 + 0.5, randM1P1() * 0.5 + 0.5, (float)i / numFlares), device, flareEffect, NULL, 0, flare1TextureArray, 1);
+		else
+			flares[i] = new Flare(XMFLOAT3(-125.0, 60.0, 70.0), XMCOLOR(randM1P1() * 0.5 + 0.5, randM1P1() * 0.5 + 0.5, randM1P1() * 0.5 + 0.5, (float)i / numFlares), device, flareEffect, NULL, 0, flare2TextureArray, 1);
+	}
+}
+
+void Scene::constructTerrain(ID3D11Device* device, ID3D11DeviceContext* context)
+{
+	Effect* grassEffect = new Effect(device, "Shaders\\cso\\grass_vs.cso", "Shaders\\cso\\grass_ps.cso", extVertexDesc, ARRAYSIZE(extVertexDesc));
+	Effect* treeEffect = new Effect(device, "Shaders\\cso\\tree_vs.cso", "Shaders\\cso\\tree_ps.cso", extVertexDesc, ARRAYSIZE(extVertexDesc));
+	Effect* oceanEffect = new Effect(device, "Shaders\\cso\\ocean_vs.cso", "Shaders\\cso\\ocean_ps.cso", extVertexDesc, ARRAYSIZE(extVertexDesc));
+
+	D3D11_BLEND_DESC grassBlendDesc;
+	ID3D11BlendState* grassBlendState = grassEffect->getBlendState();
+	grassBlendState->GetDesc(&grassBlendDesc);
+	grassBlendDesc.AlphaToCoverageEnable = TRUE;
+	grassBlendDesc.RenderTarget[0].BlendEnable = TRUE;
+	grassBlendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
+	grassBlendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_ZERO;
+	grassBlendState->Release(); device->CreateBlendState(&grassBlendDesc, &grassBlendState);
+	grassEffect->setBlendState(grassBlendState);
+	treeEffect->setBlendState(grassBlendState);
+
+	ID3D11DepthStencilState* grassDSstate = grassEffect->getDepthStencilState();
+	D3D11_DEPTH_STENCIL_DESC grassDsDesc;
+	grassDSstate->GetDesc(&grassDsDesc);
+	grassDSstate->Release(); device->CreateDepthStencilState(&grassDsDesc, &grassDSstate);
+	grassEffect->setDepthStencilState(grassDSstate);
+
+	Texture* grassAlpha = new Texture(device, L"Resources\\Textures\\grassAlpha.tif");
+	Texture* grassTexture = new Texture(device, L"Resources\\Textures\\grass.png");
+	Texture* heightMap = new Texture(device, L"Resources\\Textures\\heightmap2.bmp");
+	Texture* normalMap = new Texture(device, L"Resources\\Textures\\normalmap.bmp");
+	ID3D11ShaderResourceView* grassTextureArray[] = { grassTexture->getShaderResourceView(), grassAlpha->getShaderResourceView() };
+	ground = new Terrain(device, context, 128, 128, heightMap->getTexture(), normalMap->getTexture(), grassEffect, NULL, 0, grassTextureArray, 2);
+	ground->setWorldMatrix(ground->getWorldMatrix() * XMMatrixTranslation(-52, -0.1, -64) * XMMatrixScaling(1, 3, 1) * XMMatrixRotationY(XMConvertToRadians(0)));
+	ground->update(context);
+
+	Texture* treeTexture = new Texture(device, L"Resources\\Textures\\tree.tif");
+	ID3D11ShaderResourceView* treeTextureArray[] = { treeTexture->getShaderResourceView() };
+	tree = new Model(device, wstring(L"Resources\\Models\\tree.3ds"), treeEffect, NULL, 0, treeTextureArray, 1);
+	tree->setWorldMatrix(tree->getWorldMatrix() * XMMatrixTranslation(-2.5, 0.2, 0) * XMMatrixScaling(1.5, 3, 1.5));
+	tree->update(context);
+
+	Texture* waterNormalMap = new Texture(device, L"Resources\\Textures\\waves.dds");
+	ID3D11ShaderResourceView* waterTextureArray[] = { waterNormalMap->getShaderResourceView() };
+	water = new Grid(64, 64, device, oceanEffect, NULL, 0, waterTextureArray, 1);
+	water->setWorldMatrix(water->getWorldMatrix() * XMMatrixTranslation(-26, 0, -32));
+	water->update(context);
+}
+
+void Scene::constructStructures(ID3D11Device* device, ID3D11DeviceContext* context)
+{
+	Effect* perPixelLightingEffect = new Effect(device, "Shaders\\cso\\per_pixel_lighting_vs.cso", "Shaders\\cso\\per_pixel_lighting_ps.cso", extVertexDesc, ARRAYSIZE(extVertexDesc));
+
+	Texture* castleTexture = new Texture(device, L"Resources\\Textures\\castle.jpg");
+	ID3D11ShaderResourceView* castleTextureArray[] = { castleTexture->getShaderResourceView() };
+	castle = new Model(device, wstring(L"Resources\\Models\\castle.3DS"), perPixelLightingEffect, NULL, 0, castleTextureArray, 1);
+	castle->setWorldMatrix(castle->getWorldMatrix() * XMMatrixTranslation(0, 0.4, 0) * XMMatrixScaling(2.5, 2.5, 2.5));
+	castle->update(context);
+}
+
+void Scene::constructParticleSystems(ID3D11Device* device, ID3D11DeviceContext* context)
+{
+	Effect* fireEffect = new Effect(device, "Shaders\\cso\\fire_vs.cso", "Shaders\\cso\\fire_ps.cso", particleVertexDesc, ARRAYSIZE(particleVertexDesc));
+
+	ID3D11BlendState* fireBlendState = fireEffect->getBlendState();
+	D3D11_BLEND_DESC fireBlendDesc;
+	fireBlendState->GetDesc(&fireBlendDesc);
+	fireBlendDesc.AlphaToCoverageEnable = FALSE;
+	fireBlendDesc.RenderTarget[0].BlendEnable = TRUE;
+	fireBlendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+	fireBlendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+	fireBlendState->Release(); device->CreateBlendState(&fireBlendDesc, &fireBlendState);
+	fireEffect->setBlendState(fireBlendState);
+
+	ID3D11DepthStencilState* fireDSstate = fireEffect->getDepthStencilState();
+	D3D11_DEPTH_STENCIL_DESC fireDsDesc;
+	fireDSstate->GetDesc(&fireDsDesc);
+	fireDsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+	fireDSstate->Release(); device->CreateDepthStencilState(&fireDsDesc, &fireDSstate);
+	fireEffect->setDepthStencilState(fireDSstate);
+
+	Texture* fireTexture = new Texture(device, L"Resources\\Textures\\Fire.tif");
+	ID3D11ShaderResourceView* fireTextureArray[] = { fireTexture->getShaderResourceView() };
+	fire = new ParticleSystem(device, fireEffect, NULL, 0, fireTextureArray, 1);
+	//scale and position fire
+	fire->setWorldMatrix(fire->getWorldMatrix() * XMMatrixScaling(2, 4, 2) * XMMatrixTranslation(0, 1, 1) * XMMatrixScaling(5, 5, 5));
+	fire->update(context);
 }
 
 // Main resource setup for the application.  These are setup around a given Direct3D device.
@@ -65,118 +169,14 @@ HRESULT Scene::initialiseSceneResources()
 	// The Effect class is a helper class similar to the depricated DX9 Effect. It stores pipeline shaders, pipeline states  etc and binds them to setup the pipeline to render with a particular Effect. The constructor requires that at least shaders are provided along a description of the vertex structure.
 	Effect* basicColourEffect = new Effect(device, "Shaders\\cso\\basic_colour_vs.cso", "Shaders\\cso\\basic_colour_ps.cso", basicVertexDesc, ARRAYSIZE(basicVertexDesc));
 	Effect* basicLightingEffect = new Effect(device, "Shaders\\cso\\basic_lighting_vs.cso", "Shaders\\cso\\basic_colour_ps.cso", extVertexDesc, ARRAYSIZE(extVertexDesc));
-	Effect* perPixelLightingEffect = new Effect(device, "Shaders\\cso\\per_pixel_lighting_vs.cso", "Shaders\\cso\\per_pixel_lighting_ps.cso", extVertexDesc, ARRAYSIZE(extVertexDesc));
-	Effect* skyBoxEffect = new Effect(device, "Shaders\\cso\\sky_box_vs.cso", "Shaders\\cso\\sky_box_ps.cso", extVertexDesc, ARRAYSIZE(extVertexDesc));
 
-	Effect* flareEffect = new Effect(device, "Shaders\\cso\\flare_vs.cso", "Shaders\\cso\\flare_ps.cso", flareVertexDesc, ARRAYSIZE(flareVertexDesc));
-	Effect* grassEffect = new Effect(device, "Shaders\\cso\\grass_vs.cso", "Shaders\\cso\\grass_ps.cso", extVertexDesc, ARRAYSIZE(extVertexDesc));
-	Effect* treeEffect = new Effect(device, "Shaders\\cso\\tree_vs.cso", "Shaders\\cso\\tree_ps.cso", extVertexDesc, ARRAYSIZE(extVertexDesc));
-	Effect* oceanEffect = new Effect(device, "Shaders\\cso\\ocean_vs.cso", "Shaders\\cso\\ocean_ps.cso", extVertexDesc, ARRAYSIZE(extVertexDesc));
-	Effect* fireEffect = new Effect(device, "Shaders\\cso\\fire_vs.cso", "Shaders\\cso\\fire_ps.cso", particleVertexDesc, ARRAYSIZE(particleVertexDesc));
-
-	ID3D11DepthStencilState* skyBoxDSState = skyBoxEffect->getDepthStencilState();
-	D3D11_DEPTH_STENCIL_DESC skyBoxDSDesc;
-	skyBoxDSState->GetDesc(&skyBoxDSDesc);
-	skyBoxDSDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
-	skyBoxDSState->Release(); device->CreateDepthStencilState(&skyBoxDSDesc, &skyBoxDSState);
-	skyBoxEffect->setDepthStencilState(skyBoxDSState);
-
-	D3D11_BLEND_DESC flareBlendDesc;
-	ID3D11BlendState* flareBlendState = flareEffect->getBlendState();
-	flareBlendState->GetDesc(&flareBlendDesc);
-	flareBlendDesc.AlphaToCoverageEnable = FALSE;
-	flareBlendDesc.RenderTarget[0].BlendEnable = TRUE;
-	flareBlendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
-	flareBlendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
-	flareBlendState->Release(); device->CreateBlendState(&flareBlendDesc, &flareBlendState);
-	flareEffect->setBlendState(flareBlendState);
-
-	D3D11_BLEND_DESC grassBlendDesc;
-	ID3D11BlendState* grassBlendState = grassEffect->getBlendState();
-	grassBlendState->GetDesc(&grassBlendDesc);
-	grassBlendDesc.AlphaToCoverageEnable = TRUE;
-	grassBlendDesc.RenderTarget[0].BlendEnable = TRUE;
-	grassBlendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
-	grassBlendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_ZERO;
-	grassBlendState->Release(); device->CreateBlendState(&grassBlendDesc, &grassBlendState);
-	grassEffect->setBlendState(grassBlendState);
-	treeEffect->setBlendState(grassBlendState);
-
-	ID3D11DepthStencilState* grassDSstate = grassEffect->getDepthStencilState();
-	D3D11_DEPTH_STENCIL_DESC grassDsDesc;
-	grassDSstate->GetDesc(&grassDsDesc);
-	grassDSstate->Release(); device->CreateDepthStencilState(&grassDsDesc, &grassDSstate);
-	grassEffect->setDepthStencilState(grassDSstate);
-
-	ID3D11BlendState* fireBlendState = fireEffect->getBlendState();
-	D3D11_BLEND_DESC fireBlendDesc;
-	fireBlendState->GetDesc(&fireBlendDesc);
-	fireBlendDesc.AlphaToCoverageEnable = FALSE;
-	fireBlendDesc.RenderTarget[0].BlendEnable = TRUE;
-	fireBlendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
-	fireBlendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-	fireBlendState->Release(); device->CreateBlendState(&fireBlendDesc, &fireBlendState);
-	fireEffect->setBlendState(fireBlendState);
-
-	ID3D11DepthStencilState* fireDSstate = fireEffect->getDepthStencilState();
-	D3D11_DEPTH_STENCIL_DESC fireDsDesc;
-	fireDSstate->GetDesc(&fireDsDesc);
-	fireDsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
-	fireDSstate->Release(); device->CreateDepthStencilState(&fireDsDesc, &fireDSstate);
-	fireEffect->setDepthStencilState(fireDSstate);
-
-	Texture* cubeDayTexture = new Texture(device, L"Resources\\Textures\\grassenvmap1024.dds");
-	ID3D11ShaderResourceView* skyBoxTextureArray[] = { cubeDayTexture->getShaderResourceView() };
-	box = new Box(device, skyBoxEffect, NULL, 0, skyBoxTextureArray, 1);
-	box->setWorldMatrix(box->getWorldMatrix() * XMMatrixScaling(2000, 2000, 2000));
-	box->update(context);
-
-	Texture* flare1Texture = new Texture(device, L"Resources\\Textures\\flares\\divine.png");
-	Texture* flare2Texture = new Texture(device, L"Resources\\Textures\\flares\\extendring.png");
-	ID3D11ShaderResourceView* flare1TextureArray[] = { flare1Texture->getShaderResourceView() };
-	ID3D11ShaderResourceView* flare2TextureArray[] = { flare2Texture->getShaderResourceView() };
-
-	for (int i = 0; i < numFlares; i++)
-	{
-		if (randM1P1() > 0)
-			flares[i] = new Flare(XMFLOAT3(-125.0, 60.0, 70.0), XMCOLOR(randM1P1() * 0.5 + 0.5, randM1P1() * 0.5 + 0.5, randM1P1() * 0.5 + 0.5, (float)i / numFlares), device, flareEffect, NULL, 0, flare1TextureArray, 1);
-		else
-			flares[i] = new Flare(XMFLOAT3(-125.0, 60.0, 70.0), XMCOLOR(randM1P1() * 0.5 + 0.5, randM1P1() * 0.5 + 0.5, randM1P1() * 0.5 + 0.5, (float)i / numFlares), device, flareEffect, NULL, 0, flare2TextureArray, 1);
-	}
-
-	Texture* grassAlpha = new Texture(device, L"Resources\\Textures\\grassAlpha.tif");
-	Texture* grassTexture = new Texture(device, L"Resources\\Textures\\grass.png");
-	Texture* heightMap = new Texture(device, L"Resources\\Textures\\heightmap2.bmp");
-	Texture* normalMap = new Texture(device, L"Resources\\Textures\\normalmap.bmp");
-	ID3D11ShaderResourceView * grassTextureArray[] = { grassTexture->getShaderResourceView(), grassAlpha->getShaderResourceView() };
-	ground = new Terrain(device, context, 128, 128, heightMap->getTexture(), normalMap->getTexture(), grassEffect, NULL, 0, grassTextureArray, 2);
-	ground->setWorldMatrix(ground->getWorldMatrix() * XMMatrixTranslation(-52, -0.1, -64) * XMMatrixScaling(1, 3, 1) * XMMatrixRotationY(XMConvertToRadians(0)));
-	ground->update(context);
-
-	Texture* treeTexture = new Texture(device, L"Resources\\Textures\\tree.tif");
-	ID3D11ShaderResourceView* treeTextureArray[] = { treeTexture->getShaderResourceView() };
-	tree = new Model(device, wstring(L"Resources\\Models\\tree.3ds"), treeEffect, NULL, 0, treeTextureArray, 1);
-	tree->setWorldMatrix(tree->getWorldMatrix() * XMMatrixTranslation(-2.5, 0.2, 0) * XMMatrixScaling(1.5, 3, 1.5));
-	tree->update(context);
-
-	Texture* waterNormalMap = new Texture(device, L"Resources\\Textures\\waves.dds");
-	ID3D11ShaderResourceView* waterTextureArray[] = { waterNormalMap->getShaderResourceView(), cubeDayTexture->getShaderResourceView() };
-	water = new Grid(64, 64, device, oceanEffect, NULL, 0, waterTextureArray, 2);
-	water->setWorldMatrix(water->getWorldMatrix() * XMMatrixTranslation(-26, 0, -32));
-	water->update(context);
-
-	Texture* castleTexture = new Texture(device, L"Resources\\Textures\\castle.jpg");
-	ID3D11ShaderResourceView* castleTextureArray[] = { castleTexture->getShaderResourceView() };
-	castle = new Model(device, wstring(L"Resources\\Models\\castle.3DS"), perPixelLightingEffect, NULL, 0, castleTextureArray, 1);
-	castle->setWorldMatrix(castle->getWorldMatrix() * XMMatrixTranslation(0, 0.4, 0) * XMMatrixScaling(2.5, 2.5, 2.5));
-	castle->update(context);
-
-	Texture* fireTexture = new Texture(device, L"Resources\\Textures\\Fire.tif");
-	ID3D11ShaderResourceView* fireTextureArray[] = { fireTexture->getShaderResourceView() };
-	fire = new ParticleSystem(device, fireEffect, NULL, 0, fireTextureArray, 1);
-	//scale and position fire
-	fire->setWorldMatrix(fire->getWorldMatrix()* XMMatrixScaling(2, 4, 2) * XMMatrixTranslation(0, 1, 1)* XMMatrixScaling(5, 5, 5));
-	fire->update(context);
+	// Call scene object construct methods to build their effects, possible
+	// blend descriptions, and textures
+	constructSkybox(device, context);
+	constructFlares(device, context);
+	constructTerrain(device, context);
+	constructStructures(device, context);
+	constructParticleSystems(device, context);
 
 	// Setup a camera
 	// The LookAtCamera is derived from the base Camera class. The constructor for the Camera class requires a valid pointer to the main DirectX device
@@ -239,6 +239,124 @@ HRESULT Scene::initialiseSceneResources()
 	return S_OK;
 }
 
+void Scene::renderSkybox(ID3D11DeviceContext* context)
+{
+	if (box)
+		box->render(context);
+}
+
+void Scene::renderFlares(ID3D11DeviceContext* context)
+{
+	// Draw the Fire (Draw all transparent objects last)
+	if (flares)
+	{
+		ID3D11RenderTargetView* tempRT[1] = { 0 };
+		ID3D11DepthStencilView* tempDS = nullptr;
+
+		// Set NULL depth buffer so we can also use the Depth Buffer as a shader resource
+		// This is OK as we dont need depth testing for the flares
+
+		ID3D11DepthStencilView* nullDSV[1]; nullDSV[0] = NULL;
+		context->OMGetRenderTargets(1, tempRT, &tempDS);
+		context->OMSetRenderTargets(1, tempRT, NULL);
+		ID3D11ShaderResourceView* depthSRV = system->getDepthStencilSRV();
+		context->VSSetShaderResources(1, 1, &depthSRV);
+
+		for (int i = 0; i < numFlares; i++)
+			flares[i]->render(context);
+
+		ID3D11ShaderResourceView * nullSRV[1]; nullSRV[0] = NULL; // Used to release depth shader resource so it is available for writing
+		context->VSSetShaderResources(1, 1, nullSRV);
+		// Return default (read and write) depth buffer view.
+		context->OMSetRenderTargets(1, tempRT, tempDS);
+	}
+}
+
+void Scene::renderTerrain(ID3D11DeviceContext* context)
+{
+	if (ground)
+	{
+		for (int i = 0; i < numGrassPasses; i++)
+		{
+			cBufferSceneCPU->grassHeight = (grassLength / numGrassPasses) * i;
+			mapCbuffer(context, cBufferSceneCPU, cBufferSceneGPU, sizeof(CBufferScene));
+			ground->render(context);
+		}
+	}
+
+	if (tree)
+		tree->render(context);
+
+	if (water)
+		water->render(context);
+}
+
+void Scene::renderStructures(ID3D11DeviceContext* context)
+{
+	if (castle)
+		castle->render(context);
+}
+
+void Scene::renderParticleSystems(ID3D11DeviceContext* context)
+{
+	if (fire)
+		fire->render(context);
+}
+
+// Render scene
+HRESULT Scene::renderScene()
+{
+	ID3D11DeviceContext* context = system->getDeviceContext();
+
+	// Validate window and D3D context
+	if (isMinimised() || !context)
+		return E_FAIL;
+
+	// Clear the screen
+	static const FLOAT clearColor[4] = { 0.0f, 0.0f, 1.0f, 1.0f };
+	context->ClearRenderTargetView(system->getBackBufferRTV(), clearColor);
+	context->ClearDepthStencilView(system->getDepthStencil(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+	// Render Scene objects
+	renderSkybox(context);
+	renderFlares(context);
+	renderTerrain(context);
+	renderStructures(context);
+	renderParticleSystems(context);
+
+	// Present current frame to the screen
+	HRESULT hr = system->presentBackBuffer();
+
+	return S_OK;
+}
+
+//
+// Methods to handle initialisation, update and rendering of the scene
+HRESULT Scene::rebuildViewport()
+{
+	// Binds the render target view and depth/stencil view to the pipeline.
+	// Sets up viewport for the main window (wndHandle) 
+	// Called at initialisation or in response to window resize
+	ID3D11DeviceContext* context = system->getDeviceContext();
+	if (!context)
+		return E_FAIL;
+	// Bind the render target view and depth/stencil view to the pipeline.
+	ID3D11RenderTargetView* renderTargetView = system->getBackBufferRTV();
+	context->OMSetRenderTargets(1, &renderTargetView, system->getDepthStencil());
+	// Setup viewport for the main window (wndHandle)
+	RECT clientRect;
+	GetClientRect(wndHandle, &clientRect);
+	viewport.TopLeftX = 0;
+	viewport.TopLeftY = 0;
+	viewport.Width = static_cast<FLOAT>(clientRect.right - clientRect.left);
+	viewport.Height = static_cast<FLOAT>(clientRect.bottom - clientRect.top);
+	viewport.MinDepth = 0.0f;
+	viewport.MaxDepth = 1.0f;
+	//Set Viewport
+	context->RSSetViewports(1, &viewport);
+	return S_OK;
+}
+
 // Update scene state (perform animations etc)
 HRESULT Scene::updateScene(ID3D11DeviceContext *context,Camera *camera)
 {
@@ -256,88 +374,6 @@ HRESULT Scene::updateScene(ID3D11DeviceContext *context,Camera *camera)
 	cBufferSceneCPU->Time = gT;
 	mapCbuffer(context, cBufferSceneCPU, cBufferSceneGPU, sizeof(CBufferScene));
 	
-	return S_OK;
-}
-
-void Scene::DrawGround(ID3D11DeviceContext* context)
-{
-	if (ground)
-	{
-		for (int i = 0; i < numGrassPasses; i++)
-		{
-			cBufferSceneCPU->grassHeight = (grassLength / numGrassPasses) * i;
-			mapCbuffer(context, cBufferSceneCPU, cBufferSceneGPU, sizeof(CBufferScene));
-			ground->render(context);
-		}
-	}
-}
-
-void Scene::DrawFlare(ID3D11DeviceContext *context)
-{
-// Draw the Fire (Draw all transparent objects last)
-if (flares) {
-
-	ID3D11RenderTargetView * tempRT[1] = { 0 };
-	ID3D11DepthStencilView *tempDS = nullptr;
-
-		// Set NULL depth buffer so we can also use the Depth Buffer as a shader resource
-		// This is OK as we dont need depth testing for the flares
-
-		ID3D11DepthStencilView * nullDSV[1]; nullDSV[0] = NULL;
-		context->OMGetRenderTargets(1, tempRT, &tempDS);
-		context->OMSetRenderTargets(1, tempRT, NULL);
-		ID3D11ShaderResourceView *depthSRV = system->getDepthStencilSRV();
-		context->VSSetShaderResources(1, 1, &depthSRV);
-
-		for (int i = 0; i < numFlares; i++)
-			flares[i]->render(context);
-
-		ID3D11ShaderResourceView * nullSRV[1]; nullSRV[0] = NULL; // Used to release depth shader resource so it is available for writing
-		context->VSSetShaderResources(1, 1, nullSRV);
-		// Return default (read and write) depth buffer view.
-		context->OMSetRenderTargets(1, tempRT, tempDS);
-
-	}
-}
-
-// Render scene
-HRESULT Scene::renderScene()
-{
-	ID3D11DeviceContext *context = system->getDeviceContext();
-	
-	// Validate window and D3D context
-	if (isMinimised() || !context)
-		return E_FAIL;
-	
-	// Clear the screen
-	static const FLOAT clearColor[4] = { 0.0f, 0.0f, 1.0f, 1.0f };
-	context->ClearRenderTargetView(system->getBackBufferRTV(), clearColor);
-	context->ClearDepthStencilView(system->getDepthStencil(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-
-	// Render Scene objects
-
-	if (box)
-		box->render(context);
-
-	DrawFlare(context);
-
-	DrawGround(context);
-	
-	if (tree)
-		tree->render(context);
-
-	if (water)
-		water->render(context);
-
-	if (castle)
-		castle->render(context);
-
-	if (fire)
-		fire->render(context);
-
-	// Present current frame to the screen
-	HRESULT hr = system->presentBackBuffer();
-
 	return S_OK;
 }
 

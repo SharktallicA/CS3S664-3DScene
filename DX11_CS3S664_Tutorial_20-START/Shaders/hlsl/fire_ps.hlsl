@@ -71,11 +71,12 @@ struct FragmentOutputPacket {
 // Pixel Shader - Simple
 //-----------------------------------------------------------------
 
-FragmentOutputPacket main(FragmentInputPacket p) {
+FragmentOutputPacket main(FragmentInputPacket p)
+{
 
 	FragmentOutputPacket outputFragment;
 
 	float4 col = fireTexture.Sample(linearSampler, p.texCoord);
-	outputFragment.fragmentColour = float4(col.xyz,p.alpha*(col.x + col.y + col.z) / 3);
+	outputFragment.fragmentColour = float4(col.xyz, p.alpha * (col.x + col.y + col.z) / 3);
 	return outputFragment;
 }
