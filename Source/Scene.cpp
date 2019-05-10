@@ -250,7 +250,10 @@ void Scene::renderStructures(ID3D11DeviceContext* context)
 		rocks->render(context);
 
 	if (sword)
+	{
+		blurUtility->blurModel(sword, system->getDepthStencilSRV());
 		sword->render(context);
+	}
 }
 
 void Scene::renderParticleSystems(ID3D11DeviceContext* context)
