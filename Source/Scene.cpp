@@ -116,7 +116,7 @@ void Scene::constructTerrain(ID3D11Device* device, ID3D11DeviceContext* context)
 	Texture* waterNormalMap = new Texture(device, L"Resources\\Textures\\waves.dds");
 	ID3D11ShaderResourceView* waterTextureArray[] = { waterNormalMap->getShaderResourceView() };
 	water = new Grid(64, 64, device, oceanEffect, NULL, 0, waterTextureArray, 1);
-	water->setWorldMatrix(water->getWorldMatrix() * XMMatrixTranslation(-26, 0, -32));
+	water->setWorldMatrix(water->getWorldMatrix() * XMMatrixTranslation(-26, 0, -32) * XMMatrixRotationX(XMConvertToRadians(45)));
 	water->update(context);
 }
 
@@ -223,7 +223,7 @@ void Scene::renderFlares(ID3D11DeviceContext* context)
 
 void Scene::renderTerrain(ID3D11DeviceContext* context)
 {
-	if (ground)
+	/*if (ground)
 	{
 		for (int i = 0; i < numGrassPasses; i++)
 		{
@@ -234,7 +234,7 @@ void Scene::renderTerrain(ID3D11DeviceContext* context)
 	}
 
 	if (tree)
-		tree->render(context);
+		tree->render(context);*/
 
 	if (water)
 		water->render(context);
@@ -280,10 +280,10 @@ HRESULT Scene::initialiseSceneResources()
 	// Call scene object construct methods to build their effects, possible
 	// blend descriptions, and textures
 	constructSkybox(device, context);
-	constructFlares(device, context);
+	//constructFlares(device, context);
 	constructTerrain(device, context);
-	constructStructures(device, context);
-	constructParticleSystems(device, context);
+	//constructStructures(device, context);
+	//constructParticleSystems(device, context);
 
 	// Setup a camera
 	// The LookAtCamera is derived from the base Camera class. The constructor for the Camera class requires a valid pointer to the main DirectX device
