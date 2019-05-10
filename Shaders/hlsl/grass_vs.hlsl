@@ -63,7 +63,7 @@ struct vertexOutputPacket {
 // Vertex Shader
 //-----------------------------------------------------------------
 vertexOutputPacket main(vertexInputPacket inputVertex) {
-	float grassScaleFactor = 1.0;
+	float grassScaleFactor = 2.5;
 	vertexOutputPacket outputVertex;
 	float4x4 WVP = mul(worldMatrix, mul(viewMatrix, projMatrix));
 	// Lighting is calculated in world space.

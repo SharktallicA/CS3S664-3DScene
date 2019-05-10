@@ -185,7 +185,7 @@ void Scene::constructParticleSystems(ID3D11Device* device, ID3D11DeviceContext* 
 	ID3D11ShaderResourceView* fireTextureArray[] = { fireTexture->getShaderResourceView() };
 	fire = new ParticleSystem(device, fireEffect, NULL, 0, fireTextureArray, 1);
 	//scale and position fire
-	fire->setWorldMatrix(fire->getWorldMatrix() * XMMatrixScaling(2, 4, 2) * XMMatrixTranslation(0, 1, 1) * XMMatrixScaling(5, 5, 5));
+	fire->setWorldMatrix(fire->getWorldMatrix() * XMMatrixScaling(2, 4, 2) * XMMatrixTranslation(0, 1.6, 11.75) * XMMatrixScaling(0.5, 0.5, 0.5));
 	fire->update(context);
 }
 
@@ -234,8 +234,8 @@ void Scene::renderTerrain(ID3D11DeviceContext* context)
 		}
 	}
 
-	//if (tree)
-		//tree->render(context);
+	if (tree)
+		tree->render(context);
 
 	if (water)
 		water->render(context);
@@ -281,10 +281,10 @@ HRESULT Scene::initialiseSceneResources()
 	// Call scene object construct methods to build their effects, possible
 	// blend descriptions, and textures
 	constructSkybox(device, context);
-	//constructFlares(device, context);
+	constructFlares(device, context);
 	constructTerrain(device, context);
-	//constructStructures(device, context);
-	//constructParticleSystems(device, context);
+	constructStructures(device, context);
+	constructParticleSystems(device, context);
 
 	// Setup a camera
 	// The LookAtCamera is derived from the base Camera class. The constructor for the Camera class requires a valid pointer to the main DirectX device
@@ -362,10 +362,10 @@ HRESULT Scene::renderScene()
 
 	// Render Scene objects
 	renderSkybox(context);
-	//renderFlares(context);
+	renderFlares(context);
 	renderTerrain(context);
-	//renderStructures(context);
-	//renderParticleSystems(context);
+	renderStructures(context);
+	renderParticleSystems(context);
 
 	// Present current frame to the screen
 	HRESULT hr = system->presentBackBuffer();
