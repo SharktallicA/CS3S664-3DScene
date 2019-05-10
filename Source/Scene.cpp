@@ -2,6 +2,7 @@
 // Scene.cpp
 //
 
+#include <iostream>
 #include <stdafx.h>
 #include <string.h>
 #include <d3d11shader.h>
@@ -361,6 +362,28 @@ HRESULT Scene::renderScene()
 	return S_OK;
 }
 
+// Update scene state (perform animations etc)
+HRESULT Scene::updateScene(ID3D11DeviceContext* context, Camera* camera)
+{
+	// mainClock is a helper class to manage game time data
+	mainClock->tick();
+	//double dT = mainClock->gameTimeDelta();
+	//double gT = mainClock->gameTimeElapsed();
+	//cout << "Game time Elapsed= " << gT << " seconds" << endl;
+
+	//std::system("cls");
+	cout << "FPS:" << mainClock->averageFPS() << endl;
+
+	// If the CPU CBuffer contents are changed then the changes need to be copied to GPU CBuffer with the mapCbuffer helper function
+	mainCamera->update(context);
+
+	// Update the scene time as it is needed to animate the water
+	cBufferSceneCPU->Time = mainClock->gameTimeElapsed();
+	mapCbuffer(context, cBufferSceneCPU, cBufferSceneGPU, sizeof(CBufferScene));
+
+	return S_OK;
+}
+
 #pragma region Unmodified
 //
 // Methods to handle initialisation, update and rendering of the scene
@@ -389,25 +412,7 @@ HRESULT Scene::rebuildViewport()
 	return S_OK;
 }
 
-// Update scene state (perform animations etc)
-HRESULT Scene::updateScene(ID3D11DeviceContext *context,Camera *camera)
-{
 
-	// mainClock is a helper class to manage game time data
-	mainClock->tick();
-	double dT = mainClock->gameTimeDelta();
-	double gT = mainClock->gameTimeElapsed();
-	cout << "Game time Elapsed= " << gT << " seconds" << endl;
-
-	// If the CPU CBuffer contents are changed then the changes need to be copied to GPU CBuffer with the mapCbuffer helper function
-	mainCamera->update(context);
-
-	// Update the scene time as it is needed to animate the water
-	cBufferSceneCPU->Time = gT;
-	mapCbuffer(context, cBufferSceneCPU, cBufferSceneGPU, sizeof(CBufferScene));
-	
-	return S_OK;
-}
 
 //
 // Event handling methods
