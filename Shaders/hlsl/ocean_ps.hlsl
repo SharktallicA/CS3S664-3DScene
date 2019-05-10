@@ -86,8 +86,8 @@ FragmentOutputPacket main(FragmentInputPacket IN) {
 	FragmentOutputPacket outputFragment;
 	
 	///////// TWEAKABLE PARAMETERS //////////////////
-	float FresnelBias =		0.3;
-	float FresnelExp =		4.0;
+	float FresnelBias =		0.0; // How reflective the effect is
+	float FresnelExp =		4.0; // How quickly the effect drops off based on the angle
 	float3 DeepColor =		{ 0.0f, 0.0f, 0.1f };
 	float3 ShallowColor =	{ 0.0f, 0.2f, 0.2f };
 	float3 ReflTint =		{ 1.0f, 1.0f, 1.0f };

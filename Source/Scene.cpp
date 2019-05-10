@@ -104,7 +104,7 @@ void Scene::constructTerrain(ID3D11Device* device, ID3D11DeviceContext* context)
 	Texture* normalMap = new Texture(device, L"Resources\\Textures\\normalmap.bmp");
 	ID3D11ShaderResourceView* grassTextureArray[] = { grassTexture->getShaderResourceView(), grassAlpha->getShaderResourceView() };
 	ground = new Terrain(device, context, 128, 128, heightMap->getTexture(), normalMap->getTexture(), grassEffect, NULL, 0, grassTextureArray, 2);
-	ground->setWorldMatrix(ground->getWorldMatrix() * XMMatrixTranslation(-52, -0.1, -64) * XMMatrixScaling(1, 3, 1) * XMMatrixRotationY(XMConvertToRadians(0)));
+	ground->setWorldMatrix(ground->getWorldMatrix() * XMMatrixTranslation(-52, -0.1, -64) * XMMatrixScaling(1, 3, 1));
 	ground->update(context);
 
 	Texture* treeTexture = new Texture(device, L"Resources\\Textures\\tree.tif");
@@ -114,9 +114,10 @@ void Scene::constructTerrain(ID3D11Device* device, ID3D11DeviceContext* context)
 	tree->update(context);
 
 	Texture* waterNormalMap = new Texture(device, L"Resources\\Textures\\waves.dds");
-	ID3D11ShaderResourceView* waterTextureArray[] = { waterNormalMap->getShaderResourceView() };
-	water = new Grid(64, 64, device, oceanEffect, NULL, 0, waterTextureArray, 1);
-	water->setWorldMatrix(water->getWorldMatrix() * XMMatrixTranslation(-26, 0, -32) * XMMatrixRotationX(XMConvertToRadians(45)));
+	Texture* cubeDayTexture = new Texture(device, L"Resources\\Textures\\grassenvmap1024.dds");
+	ID3D11ShaderResourceView* waterTextureArray[] = { waterNormalMap->getShaderResourceView(), cubeDayTexture->getShaderResourceView() };
+	water = new Grid(64, 64, device, oceanEffect, NULL, 0, waterTextureArray, 2);
+	water->setWorldMatrix(water->getWorldMatrix() * XMMatrixTranslation(-26, 0, -32));
 	water->update(context);
 }
 
@@ -223,7 +224,7 @@ void Scene::renderFlares(ID3D11DeviceContext* context)
 
 void Scene::renderTerrain(ID3D11DeviceContext* context)
 {
-	/*if (ground)
+	if (ground)
 	{
 		for (int i = 0; i < numGrassPasses; i++)
 		{
@@ -233,8 +234,8 @@ void Scene::renderTerrain(ID3D11DeviceContext* context)
 		}
 	}
 
-	if (tree)
-		tree->render(context);*/
+	//if (tree)
+		//tree->render(context);
 
 	if (water)
 		water->render(context);
