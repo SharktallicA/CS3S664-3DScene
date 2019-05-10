@@ -116,13 +116,18 @@ void Scene::constructTerrain(ID3D11Device* device, ID3D11DeviceContext* context)
 void Scene::constructStructures(ID3D11Device* device, ID3D11DeviceContext* context)
 {
 	Effect* perPixelLightingEffect = new Effect(device, "Shaders\\cso\\per_pixel_lighting_vs.cso", "Shaders\\cso\\per_pixel_lighting_ps.cso", extVertexDesc, ARRAYSIZE(extVertexDesc));
-	Effect* reflectiveLightingEffect = new Effect(device, "Shaders\\cso\\reflection_map_vs.cso", "Shaders\\cso\\reflection_map_ps.cso", extVertexDesc, ARRAYSIZE(extVertexDesc));
 
 	Texture* castleTexture = new Texture(device, L"Resources\\Textures\\castle.jpg");
 	ID3D11ShaderResourceView* castleTextureArray[] = { castleTexture->getShaderResourceView() };
 	castle = new Model(device, wstring(L"Resources\\Models\\castle.3DS"), perPixelLightingEffect, NULL, 0, castleTextureArray, 1);
 	castle->setWorldMatrix(castle->getWorldMatrix() * XMMatrixTranslation(0, 0.4, 0) * XMMatrixScaling(2.5, 2.5, 2.5));
 	castle->update(context);
+
+	Texture* swordTexture = new Texture(device, L"Resources\\Textures\\Aluminum.jpg");
+	ID3D11ShaderResourceView* swordTextureArray[] = { swordTexture->getShaderResourceView() };
+	sword = new Model(device, wstring(L"Resources\\Models\\sword.3ds"), perPixelLightingEffect, NULL, 0, swordTextureArray, 1);
+	sword->setWorldMatrix(sword->getWorldMatrix() * XMMatrixScaling(0.00025, 0.00025, 0.00025) * XMMatrixRotationX(XMConvertToRadians(90)) * XMMatrixRotationY(XMConvertToRadians(180)) * XMMatrixRotationZ(XMConvertToRadians(90)) * XMMatrixTranslation(0, 2, 6));
+	sword->update(context);
 }
 
 void Scene::constructParticleSystems(ID3D11Device* device, ID3D11DeviceContext* context)
@@ -210,6 +215,9 @@ void Scene::renderStructures(ID3D11DeviceContext* context)
 {
 	if (castle)
 		castle->render(context);
+
+	if (sword)
+		sword->render(context);
 }
 
 void Scene::renderParticleSystems(ID3D11DeviceContext* context)
@@ -324,7 +332,7 @@ HRESULT Scene::renderScene()
 	renderFlares(context);
 	renderTerrain(context);
 	renderStructures(context);
-	renderParticleSystems(context);
+	//renderParticleSystems(context);
 
 	// Present current frame to the screen
 	HRESULT hr = system->presentBackBuffer();
@@ -332,6 +340,7 @@ HRESULT Scene::renderScene()
 	return S_OK;
 }
 
+#pragma region Unmodified
 //
 // Methods to handle initialisation, update and rendering of the scene
 HRESULT Scene::rebuildViewport()
@@ -559,3 +568,4 @@ HRESULT Scene::resizeResources() {
 	}
 	return S_OK;
 }
+#pragma endregion
