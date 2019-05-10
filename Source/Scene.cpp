@@ -116,6 +116,17 @@ void Scene::constructTerrain(ID3D11Device* device, ID3D11DeviceContext* context)
 void Scene::constructStructures(ID3D11Device* device, ID3D11DeviceContext* context)
 {
 	Effect* perPixelLightingEffect = new Effect(device, "Shaders\\cso\\per_pixel_lighting_vs.cso", "Shaders\\cso\\per_pixel_lighting_ps.cso", extVertexDesc, ARRAYSIZE(extVertexDesc));
+	Effect* swordGlowEffect = new Effect(device, "Shaders\\cso\\per_pixel_lighting_vs.cso", "Shaders\\cso\\emissive_ps.cso", extVertexDesc, ARRAYSIZE(extVertexDesc));
+
+	D3D11_BLEND_DESC swordGlowBlendDesc;
+	ID3D11BlendState* swordGlowBlendState = swordGlowEffect->getBlendState();
+	swordGlowBlendState->GetDesc(&swordGlowBlendDesc);
+	swordGlowBlendDesc.AlphaToCoverageEnable = FALSE;
+	swordGlowBlendDesc.RenderTarget[0].BlendEnable = TRUE;
+	swordGlowBlendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
+	swordGlowBlendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+	swordGlowBlendState->Release(); device->CreateBlendState(&swordGlowBlendDesc, &swordGlowBlendState);
+	swordGlowEffect->setBlendState(swordGlowBlendState);
 
 	Texture* castleTexture = new Texture(device, L"Resources\\Textures\\castle.jpg");
 	ID3D11ShaderResourceView* castleTextureArray[] = { castleTexture->getShaderResourceView() };
@@ -130,9 +141,9 @@ void Scene::constructStructures(ID3D11Device* device, ID3D11DeviceContext* conte
 	rocks->setWorldMatrix(rocks->getWorldMatrix() * XMMatrixScaling(0.25, 0.25, 0.25) * XMMatrixTranslation(0, 1.4, 5.9));
 	rocks->update(context);
 
-	Texture* swordTexture = new Texture(device, L"Resources\\Textures\\Aluminum.jpg");
+	Texture* swordTexture = new Texture(device, L"Resources\\Textures\\Sword_glow.jpg");
 	ID3D11ShaderResourceView* swordTextureArray[] = { swordTexture->getShaderResourceView() };
-	sword = new Model(device, wstring(L"Resources\\Models\\sword.3ds"), perPixelLightingEffect, NULL, 0, swordTextureArray, 1);
+	sword = new Model(device, wstring(L"Resources\\Models\\sword.3ds"), swordGlowEffect, NULL, 0, swordTextureArray, 1);
 	sword->setWorldMatrix(sword->getWorldMatrix() * XMMatrixScaling(0.0002, 0.0002, 0.0002) * XMMatrixRotationX(XMConvertToRadians(90)) * XMMatrixRotationY(XMConvertToRadians(180)) * XMMatrixRotationZ(XMConvertToRadians(90)) * XMMatrixTranslation(0, 1.6, 6));
 	sword->update(context);
 }

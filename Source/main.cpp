@@ -44,7 +44,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 		cout << "Hello DirectX 11...\n\n";
 		
 		// 1.4 Create main application controller object (singleton)
-		mainScene = Scene::CreateScene(600, 600, L"Khalid Ali (15005070)", L"Khalid Ali (15005070)", nCmdShow, hInstance, WndProc);
+		mainScene = Scene::CreateScene(720, 720, L"Khalid Ali (15005070)", L"Khalid Ali (15005070)", nCmdShow, hInstance, WndProc);
 
 		if (!mainScene)
 			throw exception("Cannot create main application controller");
