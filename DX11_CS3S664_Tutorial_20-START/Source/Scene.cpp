@@ -1,4 +1,3 @@
-
 //
 // Scene.cpp
 //
@@ -24,7 +23,8 @@ using namespace DirectX::PackedVector;
 
 //
 // Methods to handle initialisation, update and rendering of the scene
-HRESULT Scene::rebuildViewport(){
+HRESULT Scene::rebuildViewport()
+{
 	// Binds the render target view and depth/stencil view to the pipeline.
 	// Sets up viewport for the main window (wndHandle) 
 	// Called at initialisation or in response to window resize
@@ -49,7 +49,8 @@ HRESULT Scene::rebuildViewport(){
 }
 
 // Main resource setup for the application.  These are setup around a given Direct3D device.
-HRESULT Scene::initialiseSceneResources() {
+HRESULT Scene::initialiseSceneResources()
+{
 	ID3D11DeviceContext* context = system->getDeviceContext();
 	ID3D11Device* device = system->getDevice();
 	if (!device)
@@ -71,6 +72,7 @@ HRESULT Scene::initialiseSceneResources() {
 	Effect* grassEffect = new Effect(device, "Shaders\\cso\\grass_vs.cso", "Shaders\\cso\\grass_ps.cso", extVertexDesc, ARRAYSIZE(extVertexDesc));
 	Effect* treeEffect = new Effect(device, "Shaders\\cso\\tree_vs.cso", "Shaders\\cso\\tree_ps.cso", extVertexDesc, ARRAYSIZE(extVertexDesc));
 	Effect* oceanEffect = new Effect(device, "Shaders\\cso\\ocean_vs.cso", "Shaders\\cso\\ocean_ps.cso", extVertexDesc, ARRAYSIZE(extVertexDesc));
+	Effect* fireEffect = new Effect(device, "Shaders\\cso\\fire_vs.cso", "Shaders\\cso\\fire_ps.cso", particleVertexDesc, ARRAYSIZE(particleVertexDesc));
 
 	ID3D11DepthStencilState* skyBoxDSState = skyBoxEffect->getDepthStencilState();
 	D3D11_DEPTH_STENCIL_DESC skyBoxDSDesc;
@@ -101,10 +103,27 @@ HRESULT Scene::initialiseSceneResources() {
 	treeEffect->setBlendState(grassBlendState);
 
 	ID3D11DepthStencilState* grassDSstate = grassEffect->getDepthStencilState();
-	D3D11_DEPTH_STENCIL_DESC dsDesc;
-	grassDSstate->GetDesc(&dsDesc);
-	grassDSstate->Release(); device->CreateDepthStencilState(&dsDesc, &grassDSstate);
+	D3D11_DEPTH_STENCIL_DESC grassDsDesc;
+	grassDSstate->GetDesc(&grassDsDesc);
+	grassDSstate->Release(); device->CreateDepthStencilState(&grassDsDesc, &grassDSstate);
 	grassEffect->setDepthStencilState(grassDSstate);
+
+	ID3D11BlendState* fireBlendState = fireEffect->getBlendState();
+	D3D11_BLEND_DESC fireBlendDesc;
+	fireBlendState->GetDesc(&fireBlendDesc);
+	fireBlendDesc.AlphaToCoverageEnable = FALSE;
+	fireBlendDesc.RenderTarget[0].BlendEnable = TRUE;
+	fireBlendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+	fireBlendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+	fireBlendState->Release(); device->CreateBlendState(&fireBlendDesc, &fireBlendState);
+	fireEffect->setBlendState(fireBlendState);
+
+	ID3D11DepthStencilState* fireDSstate = fireEffect->getDepthStencilState();
+	D3D11_DEPTH_STENCIL_DESC fireDsDesc;
+	fireDSstate->GetDesc(&fireDsDesc);
+	fireDsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+	fireDSstate->Release(); device->CreateDepthStencilState(&fireDsDesc, &fireDSstate);
+	fireEffect->setDepthStencilState(fireDSstate);
 
 	Texture* cubeDayTexture = new Texture(device, L"Resources\\Textures\\grassenvmap1024.dds");
 	ID3D11ShaderResourceView* skyBoxTextureArray[] = { cubeDayTexture->getShaderResourceView() };
@@ -118,38 +137,53 @@ HRESULT Scene::initialiseSceneResources() {
 	ID3D11ShaderResourceView* flare2TextureArray[] = { flare2Texture->getShaderResourceView() };
 
 	for (int i = 0; i < numFlares; i++)
+	{
 		if (randM1P1() > 0)
 			flares[i] = new Flare(XMFLOAT3(-125.0, 60.0, 70.0), XMCOLOR(randM1P1() * 0.5 + 0.5, randM1P1() * 0.5 + 0.5, randM1P1() * 0.5 + 0.5, (float)i / numFlares), device, flareEffect, NULL, 0, flare1TextureArray, 1);
 		else
 			flares[i] = new Flare(XMFLOAT3(-125.0, 60.0, 70.0), XMCOLOR(randM1P1() * 0.5 + 0.5, randM1P1() * 0.5 + 0.5, randM1P1() * 0.5 + 0.5, (float)i / numFlares), device, flareEffect, NULL, 0, flare2TextureArray, 1);
+	}
 
 	Texture* grassAlpha = new Texture(device, L"Resources\\Textures\\grassAlpha.tif");
 	Texture* grassTexture = new Texture(device, L"Resources\\Textures\\grass.png");
-	ID3D11ShaderResourceView * grassTextureArray[] = { grassTexture->getShaderResourceView(), grassAlpha->getShaderResourceView() };
 	Texture* heightMap = new Texture(device, L"Resources\\Textures\\heightmap2.bmp");
 	Texture* normalMap = new Texture(device, L"Resources\\Textures\\normalmap.bmp");
-	ground = new Terrain(device, context, 32, 32, heightMap->getTexture(), normalMap->getTexture(), grassEffect, NULL, 0, grassTextureArray, 2);
-	ground->setWorldMatrix(ground->getWorldMatrix() * XMMatrixTranslation(-16, -0.1, -16) * XMMatrixScaling(1, 3, 1) * XMMatrixRotationY(XMConvertToRadians(0)));
+	ID3D11ShaderResourceView * grassTextureArray[] = { grassTexture->getShaderResourceView(), grassAlpha->getShaderResourceView() };
+	ground = new Terrain(device, context, 128, 128, heightMap->getTexture(), normalMap->getTexture(), grassEffect, NULL, 0, grassTextureArray, 2);
+	ground->setWorldMatrix(ground->getWorldMatrix() * XMMatrixTranslation(-52, -0.1, -64) * XMMatrixScaling(1, 3, 1) * XMMatrixRotationY(XMConvertToRadians(0)));
 	ground->update(context);
 
 	Texture* treeTexture = new Texture(device, L"Resources\\Textures\\tree.tif");
 	ID3D11ShaderResourceView* treeTextureArray[] = { treeTexture->getShaderResourceView() };
 	tree = new Model(device, wstring(L"Resources\\Models\\tree.3ds"), treeEffect, NULL, 0, treeTextureArray, 1);
-	tree->setWorldMatrix(tree->getWorldMatrix() * XMMatrixTranslation(0, 0, 0) * XMMatrixScaling(10, 10, 10));
+	tree->setWorldMatrix(tree->getWorldMatrix() * XMMatrixTranslation(-2.5, 0.2, 0) * XMMatrixScaling(1.5, 3, 1.5));
 	tree->update(context);
 
 	Texture* waterNormalMap = new Texture(device, L"Resources\\Textures\\waves.dds");
 	ID3D11ShaderResourceView* waterTextureArray[] = { waterNormalMap->getShaderResourceView(), cubeDayTexture->getShaderResourceView() };
-	water = new Grid(16, 16, device, oceanEffect, NULL, 0, waterTextureArray, 2);
-	water->setWorldMatrix(water->getWorldMatrix() * XMMatrixTranslation(-8, 0, -8));
+	water = new Grid(64, 64, device, oceanEffect, NULL, 0, waterTextureArray, 2);
+	water->setWorldMatrix(water->getWorldMatrix() * XMMatrixTranslation(-26, 0, -32));
 	water->update(context);
+
+	Texture* castleTexture = new Texture(device, L"Resources\\Textures\\castle.jpg");
+	ID3D11ShaderResourceView* castleTextureArray[] = { castleTexture->getShaderResourceView() };
+	castle = new Model(device, wstring(L"Resources\\Models\\castle.3DS"), perPixelLightingEffect, NULL, 0, castleTextureArray, 1);
+	castle->setWorldMatrix(castle->getWorldMatrix() * XMMatrixTranslation(0, 0.4, 0) * XMMatrixScaling(2.5, 2.5, 2.5));
+	castle->update(context);
+
+	Texture* fireTexture = new Texture(device, L"Resources\\Textures\\Fire.tif");
+	ID3D11ShaderResourceView* fireTextureArray[] = { fireTexture->getShaderResourceView() };
+	fire = new ParticleSystem(device, fireEffect, NULL, 0, fireTextureArray, 1);
+	//scale and position fire
+	fire->setWorldMatrix(fire->getWorldMatrix()* XMMatrixScaling(2, 4, 2) * XMMatrixTranslation(0, 1, 1)* XMMatrixScaling(5, 5, 5));
+	fire->update(context);
 
 	// Setup a camera
 	// The LookAtCamera is derived from the base Camera class. The constructor for the Camera class requires a valid pointer to the main DirectX device
 	// and and 3 vectors to define the initial position, up vector and target for the camera.
 	// The camera class  manages a Cbuffer containing view/projection matrix properties. It has methods to update the cbuffers if the camera moves changes  
 	// The camera constructor and update methods also attaches the camera CBuffer to the pipeline at slot b1 for vertex and pixel shaders
-	mainCamera = new LookAtCamera(device, XMVectorSet(0.0, 0.0, -10.0, 1.0f), XMVectorSet(0.0f, 1.0f, 0.0f, 1.0f), XMVectorZero());
+	mainCamera = new LookAtCamera(device, XMVectorSet(0.0, 0.0, -100.0, 1.0f), XMVectorSet(0.0f, 1.0f, 0.0f, 1.0f), XMVectorZero());
 
 	// Add a CBuffer to store light properties - you might consider creating a Light Class to manage this CBuffer
 	// Allocate 16 byte aligned block of memory for "main memory" copy of cBufferLight
@@ -206,7 +240,8 @@ HRESULT Scene::initialiseSceneResources() {
 }
 
 // Update scene state (perform animations etc)
-HRESULT Scene::updateScene(ID3D11DeviceContext *context,Camera *camera) {
+HRESULT Scene::updateScene(ID3D11DeviceContext *context,Camera *camera)
+{
 
 	// mainClock is a helper class to manage game time data
 	mainClock->tick();
@@ -266,8 +301,8 @@ if (flares) {
 }
 
 // Render scene
-HRESULT Scene::renderScene() {
-
+HRESULT Scene::renderScene()
+{
 	ID3D11DeviceContext *context = system->getDeviceContext();
 	
 	// Validate window and D3D context
@@ -288,9 +323,17 @@ HRESULT Scene::renderScene() {
 
 	DrawGround(context);
 	
-	tree->render(context);
+	if (tree)
+		tree->render(context);
 
-	water->render(context);
+	if (water)
+		water->render(context);
+
+	if (castle)
+		castle->render(context);
+
+	if (fire)
+		fire->render(context);
 
 	// Present current frame to the screen
 	HRESULT hr = system->presentBackBuffer();
@@ -335,11 +378,6 @@ void Scene::handleKeyDown(const WPARAM keyCode, const LPARAM extKeyFlags) {
 void Scene::handleKeyUp(const WPARAM keyCode, const LPARAM extKeyFlags) {
 	// Add key up handler here...
 }
-
-
-
-
-
 
 // Clock handling methods
 void Scene::startClock() {
@@ -483,4 +521,3 @@ HRESULT Scene::resizeResources() {
 	}
 	return S_OK;
 }
-
