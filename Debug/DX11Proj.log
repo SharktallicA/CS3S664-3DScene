@@ -1,0 +1,12 @@
+﻿  Scene.cpp
+c:\users\sharktallica\repos\cs3s664-3dscene\source\scene.cpp(70): warning C4244: 'argument' : conversion from 'double' to 'float', possible loss of data
+c:\users\sharktallica\repos\cs3s664-3dscene\source\scene.cpp(72): warning C4244: 'argument' : conversion from 'double' to 'float', possible loss of data
+c:\users\sharktallica\repos\cs3s664-3dscene\source\scene.cpp(107): warning C4305: 'argument' : truncation from 'double' to 'float'
+c:\users\sharktallica\repos\cs3s664-3dscene\source\scene.cpp(113): warning C4305: 'argument' : truncation from 'double' to 'float'
+c:\users\sharktallica\repos\cs3s664-3dscene\source\scene.cpp(151): warning C4305: 'argument' : truncation from 'double' to 'float'
+c:\users\sharktallica\repos\cs3s664-3dscene\source\scene.cpp(157): warning C4305: 'argument' : truncation from 'double' to 'float'
+c:\users\sharktallica\repos\cs3s664-3dscene\source\scene.cpp(188): warning C4305: 'argument' : truncation from 'double' to 'float'
+c:\users\sharktallica\repos\cs3s664-3dscene\source\scene.cpp(305): warning C4305: 'argument' : truncation from 'double' to 'float'
+c:\users\sharktallica\repos\cs3s664-3dscene\source\scene.cpp(306): warning C4305: 'argument' : truncation from 'double' to 'float'
+c:\users\sharktallica\repos\cs3s664-3dscene\source\scene.cpp(395): warning C4244: '=' : conversion from 'gu_seconds' to 'FLOAT', possible loss of data
+  DX11Proj.vcxproj -> C:\Users\SharktallicA\Repos\CS3S664-3DScene\Debug\DX11Proj.exe
